@@ -52,6 +52,22 @@ export const AdUploadForm: React.FC<AdUploadFormProps> = ({ onSubmit }) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setVideoFile(null);
+    setRetentionPeriod(30);
+    setRewardPerAnswer(10);
+    setPreviewUrl(null);
+    // Reset file input
+    const fileInput = document.getElementById(
+      "video-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
+
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ): void => {
@@ -171,6 +187,7 @@ export const AdUploadForm: React.FC<AdUploadFormProps> = ({ onSubmit }) => {
       });
 
       toast.success("Advertisement uploaded successfully!");
+      resetForm(); // Clear the form after successful upload
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Failed to upload advertisement. Please try again.");

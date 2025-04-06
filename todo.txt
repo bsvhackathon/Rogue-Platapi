@@ -1,0 +1,4 @@
+-[X] Show success animation with the amount you earned when you finish a quiz on an ad
+-[X] Do not allow users to watch ads more than once. Should disable the watch button after they watch it and take the quiz
+-[] After uploading an ad, clear the form
+-[X] When funding a campaign, change wording to say number of watches, not satoshis

@@ -15,6 +15,7 @@ import {
   TextField,
   Fade,
   Slide,
+  Alert,
 } from "@mui/material";
 import {
   LookupResolver,
@@ -26,6 +27,8 @@ import {
 } from "@bsv/sdk";
 import { Source } from "@bsv/uhrp-react";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import confetti from "canvas-confetti";
 
 interface AdvertisementData {
   title: string;
@@ -43,6 +46,49 @@ interface QuestionAnswer {
   answer: string;
 }
 
+// Add Confetti component
+const Confetti: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      const myConfetti = confetti.create(canvasRef.current, {
+        resize: true,
+        useWorker: true,
+      });
+
+      myConfetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+      return () => {
+        // Cleanup
+        if (canvasRef.current) {
+          canvasRef.current.width = 0;
+          canvasRef.current.height = 0;
+        }
+      };
+    }
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        zIndex: 1,
+      }}
+    />
+  );
+};
+
 const Watch: React.FC = () => {
   const [advertisements, setAdvertisements] = useState<AdvertisementData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,11 +97,42 @@ const Watch: React.FC = () => {
   const [showQuestions, setShowQuestions] = useState(false);
   const [questions, setQuestions] = useState<QuestionAnswer[]>([]);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+  const [rewardedAds, setRewardedAds] = useState<string[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [earnedSats, setEarnedSats] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiRef = useRef<HTMLCanvasElement>(null);
 
   const wallet = new WalletClient("auto", "localhost");
   const authFetch = new AuthFetch(wallet);
+
+  const fetchRewardedAds = async () => {
+    try {
+      const publicKey = await wallet.getPublicKey({ identityKey: true });
+      const response = await authFetch.fetch(
+        "http://localhost:3000/rewarded-ads",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ publicKey: publicKey.publicKey }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch rewarded ads");
+      }
+
+      const { rewardedAds } = await response.json();
+      setRewardedAds(rewardedAds);
+    } catch (error) {
+      console.error("Error fetching rewarded ads:", error);
+    }
+  };
 
   const fetchFundedAds = async () => {
     try {
@@ -81,12 +158,6 @@ const Watch: React.FC = () => {
         query: { ids: fundedAdIds },
       })) as any;
 
-      console.log("lookupResult", {
-        lookupResult,
-        fundedAdIds,
-        lookupResultType: lookupResult.outputs,
-      });
-
       if (!lookupResult || lookupResult.type !== "output-list") {
         throw new Error("Invalid lookup result format");
       }
@@ -99,7 +170,6 @@ const Watch: React.FC = () => {
           const decoded = PushDrop.decode(
             tx.outputs[output.outputIndex].lockingScript
           );
-
           const txid = tx.id("hex");
 
           if (!decoded || !decoded.fields || decoded.fields.length < 8) {
@@ -133,12 +203,14 @@ const Watch: React.FC = () => {
 
   useEffect(() => {
     fetchFundedAds();
+    fetchRewardedAds();
   }, []);
 
   const handleWatchAd = (ad: AdvertisementData) => {
     setSelectedAd(ad);
     setVideoModalOpen(true);
     setShowQuestions(false);
+    setShowSuccess(false);
     setUserAnswers({});
     // Reset video when opening modal
     if (videoRef.current) {
@@ -149,6 +221,8 @@ const Watch: React.FC = () => {
   const handleCloseModal = () => {
     setVideoModalOpen(false);
     setShowQuestions(false);
+    setShowSuccess(false);
+    setShowConfetti(false);
     setUserAnswers({});
     // Reset video when closing modal
     if (videoRef.current) {
@@ -162,7 +236,7 @@ const Watch: React.FC = () => {
     try {
       // Fetch questions for this ad
       const response = await authFetch.fetch(
-        `http://localhost:3000/funding-records`,
+        "http://localhost:3000/funding-records",
         {
           method: "POST",
           headers: {
@@ -216,6 +290,7 @@ const Watch: React.FC = () => {
     if (!selectedAd) return;
 
     try {
+      setIsSubmitting(true);
       const publicKey = await wallet.getPublicKey({ identityKey: true });
       const response = await authFetch.fetch(
         "http://localhost:3000/submit-answers",
@@ -238,9 +313,18 @@ const Watch: React.FC = () => {
 
       const quizResponse = await response.json();
       console.log("Quiz submission successful!", quizResponse);
-      handleCloseModal();
+
+      // Show success animation
+      setEarnedSats(quizResponse.correctAnswers * selectedAd.rewardPerAnswer);
+      setShowSuccess(true);
+      setShowConfetti(true);
+
+      // Refetch rewarded ads to update the UI
+      await fetchRewardedAds();
     } catch (error) {
       console.error("Error submitting answers:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -258,8 +342,6 @@ const Watch: React.FC = () => {
       </Box>
     );
   }
-
-  console.log("BONGO selectedAd", { selectedAd });
 
   return (
     <Box sx={{ p: 4, maxWidth: 1200, margin: "0 auto" }}>
@@ -324,8 +406,11 @@ const Watch: React.FC = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => handleWatchAd(ad)}
+                    disabled={rewardedAds.includes(ad.id)}
                   >
-                    Watch Ad
+                    {rewardedAds.includes(ad.id)
+                      ? "Already Watched"
+                      : "Watch Ad"}
                   </Button>
                 </CardActions>
               </Card>
@@ -340,7 +425,40 @@ const Watch: React.FC = () => {
         onClose={handleCloseModal}
         maxWidth="md"
         fullWidth
+        sx={{
+          "& .MuiDialog-paper": {
+            position: "relative",
+            overflow: "visible",
+          },
+        }}
       >
+        {/* Confetti Canvas */}
+        {showConfetti && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1300,
+              pointerEvents: "none",
+            }}
+          >
+            <canvas
+              ref={confettiRef}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+              }}
+            />
+          </Box>
+        )}
+
         <DialogTitle>
           <Box
             sx={{
@@ -376,7 +494,7 @@ const Watch: React.FC = () => {
             </Box>
           )}
 
-          {showQuestions && (
+          {showQuestions && !showSuccess && (
             <Fade in={showQuestions} timeout={500}>
               <Slide
                 direction="up"
@@ -412,6 +530,7 @@ const Watch: React.FC = () => {
                       }
                       placeholder="Your answer"
                       sx={{ mb: 2 }}
+                      disabled={isSubmitting}
                     />
                   </Box>
 
@@ -425,7 +544,7 @@ const Watch: React.FC = () => {
                     <Button
                       variant="outlined"
                       onClick={handlePreviousQuestion}
-                      disabled={currentQuestionIndex === 0}
+                      disabled={currentQuestionIndex === 0 || isSubmitting}
                     >
                       Previous
                     </Button>
@@ -434,7 +553,9 @@ const Watch: React.FC = () => {
                         variant="contained"
                         onClick={handleNextQuestion}
                         disabled={
-                          !userAnswers[questions[currentQuestionIndex].question]
+                          !userAnswers[
+                            questions[currentQuestionIndex].question
+                          ] || isSubmitting
                         }
                       >
                         Next
@@ -445,15 +566,56 @@ const Watch: React.FC = () => {
                         color="primary"
                         onClick={handleSubmitAnswers}
                         disabled={
-                          !userAnswers[questions[currentQuestionIndex].question]
+                          !userAnswers[
+                            questions[currentQuestionIndex].question
+                          ] || isSubmitting
+                        }
+                        startIcon={
+                          isSubmitting ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : null
                         }
                       >
-                        Submit
+                        {isSubmitting ? "Submitting..." : "Submit"}
                       </Button>
                     )}
                   </Box>
                 </Box>
               </Slide>
+            </Fade>
+          )}
+
+          {showSuccess && (
+            <Fade in={showSuccess} timeout={500}>
+              <Box
+                sx={{
+                  mt: 3,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {showConfetti && <Confetti />}
+                <CheckCircleIcon color="success" sx={{ fontSize: 60 }} />
+                <Typography variant="h5" gutterBottom>
+                  Congratulations!
+                </Typography>
+                <Typography variant="h6" color="primary">
+                  You earned {earnedSats} satoshis!
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCloseModal}
+                  sx={{ mt: 2 }}
+                >
+                  Close
+                </Button>
+              </Box>
             </Fade>
           )}
         </DialogContent>

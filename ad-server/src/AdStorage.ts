@@ -118,4 +118,14 @@ export class AdStorage {
       throw error;
     }
   }
+
+  async getRewardedAds(publicKey: string): Promise<string[]> {
+    try {
+      const rewardedAds = await this.payouts.find({ publicKey }).toArray();
+      return rewardedAds.map((ad) => ad.adId);
+    } catch (error) {
+      console.error("Failed to get rewarded ads:", error);
+      throw error;
+    }
+  }
 }

@@ -74,6 +74,7 @@ interface FundingModalProps {
   open: boolean;
   onClose: () => void;
   onFund: (satoshis: number, qaPairs: QAPair[]) => void;
+  rewardPerAnswer: number;
 }
 
 interface FundingRecord {
@@ -86,8 +87,9 @@ const FundingModal: React.FC<FundingModalProps> = ({
   open,
   onClose,
   onFund,
+  rewardPerAnswer,
 }) => {
-  const [satoshis, setSatoshis] = useState<string>("");
+  const [numberOfViews, setNumberOfViews] = useState<string>("");
   const [qaPairs, setQAPairs] = useState<QAPair[]>([
     { question: "", answer: "" },
   ]);
@@ -112,16 +114,19 @@ const FundingModal: React.FC<FundingModalProps> = ({
   };
 
   const handleFund = () => {
-    const satoshisNum = parseInt(satoshis);
-    if (isNaN(satoshisNum) || satoshisNum <= 0) {
-      alert("Please enter a valid amount of satoshis");
+    const viewsNum = parseInt(numberOfViews);
+    if (isNaN(viewsNum) || viewsNum <= 0) {
+      alert("Please enter a valid number of views");
       return;
     }
     if (qaPairs.some((pair) => !pair.question || !pair.answer)) {
       alert("Please fill in all questions and answers");
       return;
     }
-    onFund(satoshisNum, qaPairs);
+
+    // Calculate total satoshis: views * questions * reward per answer
+    const totalSatoshis = viewsNum * qaPairs.length * rewardPerAnswer;
+    onFund(totalSatoshis, qaPairs);
   };
 
   return (
@@ -131,13 +136,20 @@ const FundingModal: React.FC<FundingModalProps> = ({
         <Box sx={{ mt: 2 }}>
           <TextField
             fullWidth
-            label="Amount (satoshis)"
+            label="Number of views"
             type="number"
-            value={satoshis}
+            value={numberOfViews}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSatoshis(e.target.value)
+              setNumberOfViews(e.target.value)
             }
             sx={{ mb: 3 }}
+            helperText={`Total cost: ${
+              numberOfViews
+                ? parseInt(numberOfViews) * qaPairs.length * rewardPerAnswer
+                : 0
+            } satoshis (${numberOfViews} views × ${
+              qaPairs.length
+            } questions × ${rewardPerAnswer} sat/answer)`}
           />
 
           <Typography variant="subtitle1" gutterBottom>
@@ -593,6 +605,7 @@ const ManageMedia: React.FC = () => {
         open={fundingModalOpen}
         onClose={() => setFundingModalOpen(false)}
         onFund={handleFundCampaign}
+        rewardPerAnswer={selectedAd?.rewardPerAnswer || 0}
       />
     </Box>
   );

@@ -329,6 +329,27 @@ app.post("/submit-answers", async (req: Request, res: Response) => {
   }
 });
 
+// New endpoint to fetch rewarded ads for a user
+app.post("/rewarded-ads", async (req: Request, res: Response) => {
+  try {
+    const { publicKey } = req.body;
+    if (!publicKey) {
+      return res
+        .status(400)
+        .json({ error: "Missing publicKey in request body" });
+    }
+
+    const rewardedAds = await adStorage.getRewardedAds(publicKey);
+    res.json({
+      success: true,
+      rewardedAds,
+    });
+  } catch (error) {
+    console.error("Error fetching rewarded ads:", error);
+    res.status(500).json({ error: "Failed to fetch rewarded ads" });
+  }
+});
+
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
 
