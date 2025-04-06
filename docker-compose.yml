@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: ad-server-mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - ad-network
+
+volumes:
+  mongodb_data:
+    name: ad-server-mongodb-data
+
+networks:
+  ad-network:
+    name: ad-server-network

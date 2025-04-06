@@ -1,0 +1,8 @@
+{
+  "extends": "react-app",
+  "rules": {
+    "quotes": "off",
+    "semi": "off",
+    "comma-dangle": "off"
+  }
+}

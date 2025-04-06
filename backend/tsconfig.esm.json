@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "baseUrl": "./",
+    "outDir": "./dist/esm",
+    "allowSyntheticDefaultImports": true,
+    "pretty": true,
+    "noErrorTruncation": true,
+    "preserveWatchOutput": true,
+    "extendedDiagnostics": true
+  }
+}

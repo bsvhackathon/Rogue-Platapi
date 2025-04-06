@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- Always follow patterns that are described within overlay networks
+- Always strive to complete the requirements within [requirements.txt](mdc:docs/requirements.txt)

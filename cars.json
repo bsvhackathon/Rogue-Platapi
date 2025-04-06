@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "builds": [{
+    "name": "1",
+    "type": "scrypt",
+    "source": "./backend/src/contracts",
+    "artifacts": "./artifacts",
+    "compiler": {
+      "version": "1.0.0"
+    }
+  }]
+}
