@@ -162,7 +162,7 @@ export const AdUploadForm: React.FC<AdUploadFormProps> = ({ onSubmit }) => {
       const txid = transaction.id("hex");
 
       const args: SHIPBroadcasterConfig = {
-        networkPreset: "local",
+        networkPreset: location.hostname === 'localhost' ? 'local' : 'mainnet',
       };
       const broadcaster = new SHIPBroadcaster(["tm_advertisement"], args);
       const broadcasterResult = await broadcaster.broadcast(transaction);

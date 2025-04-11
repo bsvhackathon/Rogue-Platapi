@@ -42,7 +42,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({
       const publicKey = await wallet.getPublicKey({ identityKey: true });
 
       const response = await authFetch.fetch(
-        "http://localhost:3000/submit-answers",
+        "https://ad-server.babbage.systems/submit-answers",
         {
           method: "POST",
           body: JSON.stringify({

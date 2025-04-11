@@ -217,7 +217,7 @@ const ManageMedia: React.FC = () => {
     try {
       const publicKey = await wallet.getPublicKey({ identityKey: true });
       const response = await authFetch.fetch(
-        "http://localhost:3000/funding-records",
+        "https://ad-server.babbage.systems/funding-records",
         {
           method: "POST",
           headers: {
@@ -253,7 +253,7 @@ const ManageMedia: React.FC = () => {
 
   const fetchAdvertisements = useCallback(async () => {
     try {
-      const resolver = new LookupResolver({ networkPreset: "local" });
+      const resolver = new LookupResolver({ networkPreset: location.hostname === 'localhost' ? 'local' : 'mainnet' });
       const identityKey = await wallet.getPublicKey({
         identityKey: true,
       });
@@ -369,7 +369,7 @@ const ManageMedia: React.FC = () => {
       const publicKey = await wallet.getPublicKey({ identityKey: true });
 
       // Send the funding request to the server using AuthFetch
-      const response = await authFetch.fetch("http://localhost:3000/fund", {
+      const response = await authFetch.fetch("https://ad-server.babbage.systems/fund", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

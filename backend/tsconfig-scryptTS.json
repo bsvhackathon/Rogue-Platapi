@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2021",
-    "lib": ["es2021"],
+    "lib": [
+      "es2021"
+    ],
     "experimentalDecorators": true,
     "module": "commonjs",
     "rootDir": "./",
@@ -14,5 +16,7 @@
     "sourceMap": true,
     "noEmit": true
   },
-  "include": ["src/contracts/**/*.ts"]
+  "include": [
+    "src/contracts/**/*.ts"
+  ]
 }

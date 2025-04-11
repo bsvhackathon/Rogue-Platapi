@@ -113,7 +113,7 @@ const Watch: React.FC = () => {
     try {
       const publicKey = await wallet.getPublicKey({ identityKey: true });
       const response = await authFetch.fetch(
-        "http://localhost:3000/rewarded-ads",
+        "https://ad-server.babbage.systems/rewarded-ads",
         {
           method: "POST",
           headers: {
@@ -138,7 +138,7 @@ const Watch: React.FC = () => {
     try {
       // First, fetch the list of funded ad IDs
       const response = await authFetch.fetch(
-        "http://localhost:3000/funded-ads"
+        "https://ad-server.babbage.systems/funded-ads"
       );
       if (!response.ok) {
         throw new Error("Failed to fetch funded ads");
@@ -152,7 +152,7 @@ const Watch: React.FC = () => {
       }
 
       // Then, fetch the advertisement details for each funded ad
-      const resolver = new LookupResolver({ networkPreset: "local" });
+      const resolver = new LookupResolver({ networkPreset: location.hostname === 'localhost' ? 'local' : 'mainnet' });
       const lookupResult = (await resolver.query({
         service: "ls_advertisement",
         query: { ids: fundedAdIds },
@@ -236,7 +236,7 @@ const Watch: React.FC = () => {
     try {
       // Fetch questions for this ad
       const response = await authFetch.fetch(
-        "http://localhost:3000/funding-records",
+        "https://ad-server.babbage.systems/funding-records",
         {
           method: "POST",
           headers: {
@@ -293,7 +293,7 @@ const Watch: React.FC = () => {
       setIsSubmitting(true);
       const publicKey = await wallet.getPublicKey({ identityKey: true });
       const response = await authFetch.fetch(
-        "http://localhost:3000/submit-answers",
+        "https://ad-server.babbage.systems/submit-answers",
         {
           method: "POST",
           headers: {

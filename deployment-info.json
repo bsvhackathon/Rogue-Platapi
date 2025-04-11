@@ -14,11 +14,8 @@
     "language": "react",
     "sourceDirectory": "./frontend"
   },
-  "contracts": {
-    "language": "sCrypt",
-    "baseDirectory": "./backend"
-  },
-  "configs": [{
+  "configs": [
+    {
       "name": "Local LARS",
       "network": "mainnet",
       "provider": "LARS",
@@ -28,22 +25,10 @@
       ]
     },
     {
-      "name": "atx",
-      "provider": "CARS",
-      "CARSCloudURL": "https://cars.atx.systems",
-      "projectID": "28aa5632cc9f2974234bba40ff00f20d",
-      "network": "mainnet",
-      "deploy": [
-        "frontend",
-        "backend"
-      ],
-      "frontendHostingMethod": "HTTPS"
-    },
-    {
       "name": "babbage",
       "provider": "CARS",
       "CARSCloudURL": "https://cars.babbage.systems",
-      "projectID": "161a4f0f091010a0f8a34a5d1d1b9dd7",
+      "projectID": "379d53c918b867e304c60ed581d2298d",
       "network": "mainnet",
       "deploy": [
         "frontend",
